@@ -271,3 +271,38 @@ docker compose up
 We can now access the project on the web by browsing to <http://127.0.0.1:8000/>.
 
 To stop the server, press Ctrl+C.
+
+## Section 6: GitHub automated actions
+
+Common uses:
+
+- Deployment (nit )
+- Code linting
+- Unit tests
+
+We add on-push triggers to run unit tests.
+
+Pricing:
+
+- Charged per minute
+- Every account gets 2,000 free minutes
+
+Configuring GitHub actions:
+
+- Add `.github/workflows/checks.yml` file
+- Set trigger and steps to lint and unit tests
+- We pull images from DockerHub - it has rate limits
+  - Anonymous: 100/6h (identifies by IP)
+  - Authenticated: 200/6h
+- GitHub Actions uses shared IP addresses
+  - Limit applied to all users
+- We will authenticate GitHub Actions with Docker Hub
+  - 200 pulls per 6h all to ourselves
+
+How to authenticate with Docker Hub?
+
+- Register account on <https://hub.docker.com/>
+- Use `docker login` during our job
+- Add secrets to GitHub project.
+  - These are encrypted
+  - Only decrypted during actions execution
