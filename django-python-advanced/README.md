@@ -163,3 +163,91 @@ docker compose down
 docker compose build 
 ...
 ```
+
+### Linting and Testing
+
+Steps:
+
+- Install `flake8` package
+- Run it through Docker Compose
+
+```sh
+docker compose run --rm app sh -c "flake8"
+```
+
+If they are linting errors it will print in the console.
+If they are multiple errors, the recommendation is to work these from bottom up.
+
+For unit testing we are using te Django test suite:
+
+- Setup tests per Django app
+- Run the tests through Docker Compose
+
+```sh
+docker compose tun --rm app sh -c "python manage.py test"
+```
+
+Configure `flake8` tool.
+
+Create `requirements.dev.txt` file:
+
+```sh
+flake8>=3.9.2,<3.10
+```
+
+We will add a separate build step for development, that's why we separate the requirements.
+
+We add to docker-compose.yaml "DEV" argument:
+
+```yaml
+services:
+  app:
+    build:
+      context: .
+      args:
+        - DEV=true
+...
+```
+
+And we add to the "Dockerfile":
+
+```sh
+COPY ./requirements.dev.txt /tmp/requirements.dev.txt
+
+ARG DEV=false
+```
+
+When we use the Dockerfile through the `docker-compose.yaml` configuration we will set `DEV=true`.
+
+When we run it thought other Docker Compose configuration it will be defaulted to false.
+
+Then we add to run command in the Dockerfile the `if` statement below:
+
+```sh
+RUN python -m venv /py && \
+  /py/bin/pip install --upgrade pip && \
+  /py/bin/pip install -r /tmp/requirements.txt && \
+  if [ $DEV = "true" ]; \
+    then /py/bin/pip install -r /tmp/requirements.dev.txt ; \
+  fi && \
+  ...
+```
+
+We add configuration for flake8. Mainly we want to exclude files that we don't need.
+
+We add the file inside the `./app` directory `./app/.flake8`:
+
+```ini
+[flake8]
+exclude =
+  migrations,
+  __pycache__,
+  manage.py,
+  settings.py
+```
+
+And now test the linter tool:
+
+```sh
+docker compose run --rm app sh -c "flake8"
+```
