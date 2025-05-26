@@ -147,8 +147,8 @@ services:
 ```
 
 We map the local `./app` folder to the container's `/app`.
-We want whatever content we have locally to have it in the container.
-That way we sync automatically and we don;t need to rebuild.
+We want whatever content we have locally to have it in the container, and vice versa.
+That way we sync automatically and we don't need to rebuild.
 
 The command we can override every time when run the `docker-compose`, but this here is the default.
 
@@ -251,3 +251,23 @@ And now test the linter tool:
 ```sh
 docker compose run --rm app sh -c "flake8"
 ```
+
+Create Django project.
+We create a new project on the Docker image, as Django is already installed in it.
+The "." at the end says : create app in the current directory, instead creating a subdirectory "app/app":
+
+```sh
+docker compose run --rm app sh -c "django-admin startproject app ."
+```
+
+You can see it adds `manage.py` under `./app`.
+
+Run the project (the dev server) with Docker Compose:
+
+```sh
+docker compose up
+```
+
+We can now access the project on the web by browsing to <http://127.0.0.1:8000/>.
+
+To stop the server, press Ctrl+C.
