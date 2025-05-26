@@ -128,3 +128,38 @@ venv/
 Create ampty `app` subdirectory.
 
 Test building our image: `docker build .` and see if any errors
+
+Create `docker-compose.yaml` file:
+
+```yaml
+version: '3.9'
+
+services:
+  app:
+    build:
+      context: .
+    ports:
+      - '8000:8000'
+    volumes:
+      - ./app:/app
+    command: >
+      sh -c "python manage.py runserver 0.0.0.0:8000"
+```
+
+We map the local `./app` folder to the container's `/app`.
+We want whatever content we have locally to have it in the container.
+That way we sync automatically and we don;t need to rebuild.
+
+The command we can override every time when run the `docker-compose`, but this here is the default.
+
+Run the docker-compose: `docker-compose build`
+
+Note: Since I am running Rancher Desktop, the compose command in the Docker CLI supports most of the docker-compose commands and flags.
+It is expected to be a drop-in replacement for docker-compose.
+
+```sh
+docker compose up -d
+docker compose down
+docker compose build 
+...
+```
