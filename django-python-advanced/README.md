@@ -382,3 +382,77 @@ Possible reason is, you are missing the `__init__.py` file in the `tests/` dir.
 Another possibility is wrong indentation in the test cases.
 
 Common issue is seeing `ImportError` when running tests.
+
+## Section 8: Configure Database
+
+Will be using PostgreSQL and Docker Compose
+
+We will have persistent volumes, so that we can reuse.
+
+Volumes:
+
+- Persistent data
+- Maps directory in container to local machine
+
+Changes in `docker-compose.yaml`:
+
+- Define volume for Postgres data
+- Define `db` service that pulls Postgres docker image
+- It accesses the volume
+- Define initial environment variables
+  - Will create database, user and password for the user - this is initial setup for development
+  - These will only be used on our local machine
+- Change the `app` service to connect to the `db`
+  - also to depend on it, so that `db` starts first, then `app`
+
+Test the changes:
+
+```sh
+docker compose up -d
+```
+
+### Connect the Django app to the DB
+
+All settings are defined in `settings.py` file.
+
+We set environment variables and read these in `settings.py`.
+
+We need the package `Psycopg2` package for Django to connect to Postgres.
+
+Options to install `Psycopg2` are:
+
+- Install `psycopg-binary`
+  - OK for development
+  - Not good for production (not optimized binary)
+- Install `psycopg2`
+  - Compiles from source to the specific OS
+  - Downside: we have to have some dependencies to compile and install
+  - Easy to install with Docker since we know and reuse the same image and OS!
+
+List of package dependencies:
+
+- C compiler
+- python3-dev
+- libpq-dev
+
+Their equivalent in Alpine:
+
+- postgresql-client
+- build-base
+- postgresql-dev
+- musl-dev
+
+Docker best practices:
+
+- Cleanup build dependencies
+  - Clean up these ^ dependencies when we build
+
+Change the `Dockerfile`, see added apk commands to build the dependencies and clean up temporary file.
+We also change the `requirements.txt` adding `psycopg2`.
+
+Restart Docker Compose:
+
+```sh
+docker compose down
+docker compose up -d
+```
