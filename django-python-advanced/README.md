@@ -357,3 +357,28 @@ Run the tests: `docker compose run --rm app sh -c "python manage.py test"`.
 We run a service `app` and shell command on it.
 
 ### Mocking
+
+How to mock code?
+
+- Use `unittest.mock`
+  - `MagicMock/Mock` - Replace real objects
+  - `patch` - Overrides code for tests
+
+### Testing APIs
+
+Django REST Framework `API Client`:
+
+- Based on the Django's `TestClient`
+- Make requests
+- Check results
+- Override authentication - test the behavior of the API assuming you are authenticated
+
+### Common testing issues
+
+Tests not running - it says you ran less tests that you actually have.
+
+Possible reason is, you are missing the `__init__.py` file in the `tests/` dir.
+
+Another possibility is wrong indentation in the test cases.
+
+Common issue is seeing `ImportError` when running tests.
