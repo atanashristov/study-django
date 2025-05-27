@@ -450,9 +450,80 @@ Docker best practices:
 Change the `Dockerfile`, see added apk commands to build the dependencies and clean up temporary file.
 We also change the `requirements.txt` adding `psycopg2`.
 
-Restart Docker Compose:
+Stop Docker Compose, Build and Run again:
 
 ```sh
 docker compose down
+docker compose build
 docker compose up -d
+```
+
+In the `settings.py` define the default database set up with environment variables.
+
+### Fixing DB racing conditions
+
+Problems with Docker Compose:
+
+- Using `depends_on` ensures the service starts
+  - Does not ensure the application (Postgresql) is running yet
+    - Can be a problem when starting the Django app
+    - The DB may not be ready to accept connections
+    - Can take longer for Postgres to start than teh Django app to start
+
+Solution:
+
+- Make Django "wait for db"
+  - Checking for the availability of the database
+  - Continue execution once the db is ready
+- Create custom Django "wait_for_db" command for this
+
+### We create new `core` app
+
+```sh
+docker compose run --rm app sh -c "python manage.py startapp core"
+```
+
+Remove `tests.py` and `views.py` files as we won't need those.
+
+Create directory `tests` and `__init__.py` file in it.
+
+Add the core app to the `app/settings.py` in `INSTALLED_APPS`
+
+Write `wait_for_db` command as `app\core\management\commands\wait_for_db.py`.
+Because of the directory names, Django will allow using that command in `python manage.py`.
+
+And the unit tests are added here: `app\core\tests\test_commands.py`.
+
+Mocking setup means: First 2 calls return the DB server is not started yet,
+next 3 calls says the DB accepts connections, but is not ready (not yet operational),
+then finally returns OK.
+
+```py
+    def test_wait_for_db_delay(self, patched_check):
+        """Test waiting for database when getting OperationalError."""
+        patched_check.side_effect = [Psycopg2Error] * 2 + \
+            [OperationalError] * 3 + [True]
+```
+
+The patch is applied from the inside out - in that order:
+
+```py
+@patch('core.management.commands.wait_for_db.Command.check')
+class CommandTests(SimpleTestCase):
+    """Test commands."""
+
+    @patch('time.sleep')
+    def test_wait_for_db_delay(self, patched_sleep, patched_check):
+...
+```
+
+This is how we can execute a command:
+
+```sh
+docker compose run --rm app sh -c "python manage.py wait_for_db"
+
+[+] Creating 1/1
+ ✔ Container recipe-app-api-db-1  Running                                                                                                                                             0.0s
+Waiting for database...
+Database available!
 ```
