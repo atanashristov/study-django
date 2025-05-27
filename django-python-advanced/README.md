@@ -306,3 +306,54 @@ How to authenticate with Docker Hub?
 - Add secrets to GitHub project.
   - These are encrypted
   - Only decrypted during actions execution
+
+## Section 7: TDD in Django
+
+Django has built in "Django test framework":
+
+- Based on the `unittest` library
+- Django adds
+  - Test client - dummy web browser
+  - Simulate authentication
+  - Temporary database
+- Django REST Framework adds features
+  - API test client
+
+Where do you put tests?
+
+- Placeholder `tests.py` added to each app
+- Or, create `tests/` subdirectory to split tests up
+- Keep in mind:
+  - Only use `tests.py` or `tests/` directory (not both)
+  - Test modules must start with `test_`
+  - Test directories must contain `__init__.py`
+
+Test Database:
+
+- Test code that uses the DB (reads, writes)
+  - Separate than the real DB
+- Specific database for tests
+  - Django creates automatically
+  - Runs a test and cleans the data
+  - Runs the next test and cleans the data
+  - ... etc.
+    - You can override, so you have consistent data for all tests
+
+Test classes:
+
+- `SimpleTestCase`
+  - No Db integration
+  - Useful for code w/o database
+- `TestCase`
+  - Most common
+  - Can read and write to DB
+
+Add module `calc.py` with method `add()` - just so we have some code to test.
+
+Add `tests.py` - see inside the unit tests for the `add()` method.
+
+Run the tests: `docker compose run --rm app sh -c "python manage.py test"`.
+
+We run a service `app` and shell command on it.
+
+### Mocking
