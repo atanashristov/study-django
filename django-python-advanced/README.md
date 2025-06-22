@@ -578,6 +578,8 @@ Then we change the "Test" step in the `.github/checks.yaml`:
 
 ## Section 9: Create User Model
 
+### Section 9. Chapter 45: The Django user model
+
 The default user model has some issues:
 
 - Uses "username" instead of "email" for login
@@ -607,3 +609,21 @@ The `PermissionsMixin`:
 
 Since we already created _migrations_ we will have to clear those.
 When working with custom user model it is recommended to create the model before running migrations.
+
+### Section 9. Chapter 46: Design custom user model
+
+User model manager:
+
+- Used to manage objects from our custom user model
+- Custom logic for creating objects
+  - Hash password
+- Used by Django CLI
+
+`BaseUserManager` comes from Django:
+
+- Base class for managing users
+- Useful helper methods
+  - `normalize_email`: for storing emails consistently
+- Methods we'll define
+  - `create_user`: called when creating user
+  - `create_superuser`: used by the CLI to create a superuser (admin)
