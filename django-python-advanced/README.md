@@ -184,7 +184,7 @@ For unit testing we are using te Django test suite:
 - Run the tests through Docker Compose
 
 ```sh
-docker compose tun --rm app sh -c "python manage.py test"
+docker compose run --rm app sh -c "python manage.py test"
 ```
 
 Configure `flake8` tool.
@@ -517,7 +517,13 @@ class CommandTests(SimpleTestCase):
 ...
 ```
 
-This is how we can execute a command:
+Run the unit tests and the flake linter:
+
+```sh
+docker compose run --rm app sh -c "python manage.py test && flake8"
+```
+
+This is how we can execute a command and thereof test it:
 
 ```sh
 docker compose run --rm app sh -c "python manage.py wait_for_db"
@@ -527,3 +533,77 @@ docker compose run --rm app sh -c "python manage.py wait_for_db"
 Waiting for database...
 Database available!
 ```
+
+### Section 8. Chapter 42: Database Migrations
+
+To create migrations run:
+
+```sh
+python manage.py makemigrations
+```
+
+To apply the migrations run:
+
+```sh
+python manage.py migrate
+```
+
+Best to run it every time after start the application - after waiting for DB.
+
+### Section 8. Chapter 43: Update Docker Compose and CI/CD
+
+We change the command in `docker-compose.yaml` for the "app":
+
+```sh
+      sh -c "python manage.py wait_for_db &&
+             python manage.py migrate &&
+             python manage.py runserver 0.0.0.0:8000"
+```
+
+Then we test with:
+
+```sh
+docker compose down
+docker compose up
+```
+
+Then we change the "Test" step in the `.github/checks.yaml`:
+
+```yaml
+      - name: Test
+        run: |
+          docker compose run --rm app sh -c "python manage.py wait_for_db" &&
+          docker compose run --rm app sh -c "python manage.py test"
+```
+
+## Section 9: Create User Model
+
+The default user model has some issues:
+
+- Uses "username" instead of "email" for login
+- Not easy to customize
+
+So we create custom user model for new projects, so it is easier to customize.
+
+We create a model class:
+
+- Create model
+  - Base from `AbstractBaseUser` and `PermissionsMixin`
+- Create custom manager
+  - Used for _CLI integration_
+- Set `AUTH_USER_MODEL` in _settings.py_
+- Create and run migrations for your project
+
+The `AbstractBaseUser`:
+
+- Provides features for authentication
+- Doesn't include fields
+
+The `PermissionsMixin`:
+
+- Supports the Django permission system
+- Includes _fields_ and _methods_
+- Can be used from Django Admin
+
+Since we already created _migrations_ we will have to clear those.
+When working with custom user model it is recommended to create the model before running migrations.
