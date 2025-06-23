@@ -160,7 +160,7 @@ It is expected to be a drop-in replacement for docker-compose.
 ```sh
 docker compose up -d
 docker compose down
-docker compose build 
+docker compose build
 ...
 ```
 
@@ -627,3 +627,123 @@ User model manager:
 - Methods we'll define
   - `create_user`: called when creating user
   - `create_superuser`: used by the CLI to create a superuser (admin)
+
+### Section 9. Chapter 47: Add user model tests
+
+Create test file in `app/core/tests/test_models.py`.
+
+Note: in VS Code we open "Settings" and from Text Editor - Files check the box for "Trim Trailing Space"
+
+### Section 9. Chapter 48: Implement user model
+
+Define user model class in `app/core/models.py`.
+
+Add the model to `app/app/settings.py`:
+
+```py
+AUTH_USER_MODEL = 'core.User'
+```
+
+Then we can make migrations to our project:
+
+```sh
+docker compose run --rm app sh -c "python manage.py makemigrations"
+[+] Creating 1/1
+ ✔ Container recipe-app-api-db-1  Running                                                                                                                                  0.0s
+Migrations for 'core':
+  core/migrations/0001_initial.py
+    - Create model User
+```
+
+Apply the migration to the docker compose:
+
+```sh
+docker compose run --rm app sh -c "python manage.py wait_for_db && python manage.py migrate"
+
+[+] Creating 1/1
+ ✔ Container recipe-app-api-db-1  Running                                                                                                                                                                                       0.0s
+Waiting for database...
+Database available!
+Traceback (most recent call last):
+  File "/app/manage.py", line 22, in <module>
+    main()
+  File "/app/manage.py", line 18, in main
+    execute_from_command_line(sys.argv)
+  File "/py/lib/python3.9/site-packages/django/core/management/__init__.py", line 419, in execute_from_command_line
+    utility.execute()
+  File "/py/lib/python3.9/site-packages/django/core/management/__init__.py", line 413, in execute
+    self.fetch_command(subcommand).run_from_argv(self.argv)
+  File "/py/lib/python3.9/site-packages/django/core/management/base.py", line 354, in run_from_argv
+    self.execute(*args, **cmd_options)
+  File "/py/lib/python3.9/site-packages/django/core/management/base.py", line 398, in execute
+    output = self.handle(*args, **options)
+  File "/py/lib/python3.9/site-packages/django/core/management/base.py", line 89, in wrapped
+    res = handle_func(*args, **kwargs)
+  File "/py/lib/python3.9/site-packages/django/core/management/commands/migrate.py", line 95, in handle
+    executor.loader.check_consistent_history(connection)
+  File "/py/lib/python3.9/site-packages/django/db/migrations/loader.py", line 306, in check_consistent_history
+    raise InconsistentMigrationHistory(
+django.db.migrations.exceptions.InconsistentMigrationHistory: Migration admin.0001_initial is applied before its dependency core.0001_initial on database 'default'.
+```
+
+OOPS! In this case we will have to clear the existing data, as we already pre-applied migrations.
+
+Check for the database volume:
+
+```sh
+docker volume ls
+DRIVER    VOLUME NAME
+...
+local     recipe-app-api_dev-db-data
+```
+
+, and then stop Docker Compose remove the volume:
+
+```sh
+docker compose down
+docker volume rm recipe-app-api_dev-db-data
+```
+
+Then run the migrations again:
+
+```sh
+docker compose run --rm app sh -c "python manage.py wait_for_db && python manage.py migrate"
+[+] Creating 3/3
+ ✔ Network recipe-app-api_default       Created                                                                                                                                                                                 0.1s
+ ✔ Volume "recipe-app-api_dev-db-data"  Created                                                                                                                                                                                 0.0s
+ ✔ Container recipe-app-api-db-1        Created                                                                                                                                                                                 0.1s
+[+] Running 1/1
+ ✔ Container recipe-app-api-db-1  Started                                                                                                                                                                                       0.2s
+Waiting for database...
+Database unavailable, waiting 1 second...
+Database unavailable, waiting 1 second...
+Database available!
+Operations to perform:
+  Apply all migrations: admin, auth, contenttypes, core, sessions
+Running migrations:
+  Applying contenttypes.0001_initial... OK
+  Applying contenttypes.0002_remove_content_type_name... OK
+  Applying auth.0001_initial... OK
+  Applying auth.0002_alter_permission_name_max_length... OK
+  Applying auth.0003_alter_user_email_max_length... OK
+  Applying auth.0004_alter_user_username_opts... OK
+  Applying auth.0005_alter_user_last_login_null... OK
+  Applying auth.0006_require_contenttypes_0002... OK
+  Applying auth.0007_alter_validators_add_error_messages... OK
+  Applying auth.0008_alter_user_username_max_length... OK
+  Applying auth.0009_alter_user_last_name_max_length... OK
+  Applying auth.0010_alter_group_name_max_length... OK
+  Applying auth.0011_update_proxy_permissions... OK
+  Applying auth.0012_alter_user_first_name_max_length... OK
+  Applying core.0001_initial... OK
+  Applying admin.0001_initial... OK
+  Applying admin.0002_logentry_remove_auto_add... OK
+  Applying admin.0003_logentry_add_action_flag_choices... OK
+  Applying sessions.0001_initial... OK
+```
+
+Now we can run our test to verify the migration and creating a user:
+
+```sh
+docker compose run --rm app sh -c "python manage.py test"
+```
