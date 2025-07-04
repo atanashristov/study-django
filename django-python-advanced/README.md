@@ -753,3 +753,32 @@ docker compose run --rm app sh -c "python manage.py test"
 Added tests to "test_models.py" and call to normalize the email in "models.py".
 
 ### Section 9. Chapter 50: Require email
+
+Added tests to "test_models.py" and check for email in "models.py".
+
+### Section 9. Chapter 51: Add superuser support
+
+Added tests to "test_models.py" and "create_superuser" method in "models.py".
+
+### Section 9. Chapter 52: Test the user model
+
+If we run `docker compose up -d` it will not apply migrations as we did not change the model.
+
+Browse to <http://localhost:8000/admin> and you should get the admin site.
+
+In order to login, we have to create credentials. In the terminal run "createsuperuser" command to set your admin password:
+
+```sh
+ recipe-app-api  docker compose up -d
+[+] Running 2/2
+ ✔ Container recipe-app-api-db-1
+ ✔ Container recipe-app-api-app-1
+
+ recipe-app-api  docker compose run --rm app sh -c "python manage.py createsuperuser"
+[+] Creating 1/1
+ ✔ Container recipe-app-api-db-1
+Email: admin@example.com
+Password:
+```
+
+And then you can login to the admin portal.
