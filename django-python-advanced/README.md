@@ -747,3 +747,9 @@ Now we can run our test to verify the migration and creating a user:
 ```sh
 docker compose run --rm app sh -c "python manage.py test"
 ```
+
+### Section 9. Chapter 49: Normalize email address
+
+Added tests to "test_models.py" and call to normalize the email in "models.py".
+
+### Section 9. Chapter 50: Require email
